@@ -1,72 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>D&D5e Character Creator</title>
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+        <script src="CharacterCreator.js"></script>
+        <script>
+            var classes = "Bard,Monk,Ranger,Sorcerer,Barbarian,Druid,Cleric,Fighter,Rogue,Paladin,Warlock,Wizard".split(",");
+            var backgrounds = "Haunted One,Charlatan,Entertainer,Gladiator,Knight,Outlander,Pirate,Soldier,Sailor,Urchin,Hermit,Far Traveler,Noble,Folk Hero,Acolyte,Criminal,Sage".split(",");
+            var races = "Dragonborn,Human,Elf,Half-Elf,Halfling,Dwarf,Gnome,Orc,Tiefling,Aasimar,Half-Orc".split(",");
+        </script>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>D&D5e Character Creator</title>
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
-        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
-    <script src="CharacterCreator.js"></script>
-    <script>
-        var classes = "Bard,Monk,Ranger,Sorcerer,Barbarian,Druid,Cleric,Fighter,Rogue,Paladin,Warlock,Wizard".split(",");
-        var backgrounds = "Haunted One,Charlatan,Entertainer,Gladiator,Knight,Outlander,Pirate,Soldier,Sailor,Urchin,Hermit,Far Traveler,Noble,Folk Hero,Acolyte,Criminal,Sage".split(",");
-        var races = "Dragonborn,Human,Elf,Half-Elf,Halfling,Dwarf,Gnome,Orc,Tiefling,Aasimar,Half-Orc".split(",");
-    </script>
+        <script>
+            $(function() {
+                var character = {};
+                var characters = [];
 
-    <script>
-        $(function () {
-            var character = {};
-            var characters = [];
+                const HandleDropdown = ev => {
+                    var name = ev.currentTarget.name;
+                    var value = ev.currentTarget.value;
 
-            const HandleDropdown = ev => {
-                var name = ev.currentTarget.name;
-                var value = ev.currentTarget.value;
+                    character[name] = value;
+                };
 
-                character[name] = value;
-            }
+                const GenerateStats = () => {
+                    var noOnesAllowed = false;
+                    if($('#noOnesAllowed')[0].checked) noOnesAllowed = true;
+                    character["stats"] = RollStats(noOnesAllowed);
+                };
 
-            const GenerateStats = () => {
-                character["stats"] = RollStats();
-            }
+                const AddCharacter = char => {
+                    var r = char["race"] ? char["race"] : "None selected";
+                    var c = char["class"] ? char["class"] : "None selected";
+                    var b = char["background"] ? char["background"] : "None selected";
 
-            const AddCharacter = (char) => {
-                var r = char["race"] ? char["race"] : "None selected";
-                var c = char["class"] ? char["class"] : "None selected";
-                var b = char["background"] ? char["background"] : "None selected";
+                    var newchar = { race: r, class: c, background: b, ...character };
+                    characters.push(newchar);
+                    character = {};
+                    ClearSelections();
+                };
 
-                var newchar = { "race": r, "class": c, "background": b, ...character };
-                console.log(newchar, r, c, b)
-                characters.push(newchar);
-                character = {};
-                ClearSelections();
-            }
+                const ClearSelections = () => {
+                    $("select").val("");
+                };
 
-            const ClearSelections = () => {
-                $('select').val("");
-            }
+                $("#race-selection, #class-selection, #background-selection").on("change", HandleDropdown);
 
-            $('#race-selection, #class-selection, #background-selection').on('change', HandleDropdown);
+                $("button.add").on("click", ev => {
+                    GenerateStats();
+                    AddCharacter(character);
+                    RefreshOutput();
+                });
 
-            $('button.add').on('click', ev => {
-                GenerateStats();
-                AddCharacter(character);
-                RefreshOutput();
-            })
+                $("button.random").on("click", ev => {
+                    character["race"] = GetRandomItemFromArray(races);
+                    character["class"] = GetRandomItemFromArray(classes);
+                    character["background"] = GetRandomItemFromArray(backgrounds);
+                    GenerateStats();
+                    AddCharacter(character);
+                    RefreshOutput();
+                });
 
-            $('button.random').on('click', ev => {
-                character["race"] = GetRandomItemFromArray(races);
-                character["class"] = GetRandomItemFromArray(classes);
-                character["background"] = GetRandomItemFromArray(backgrounds);
-                GenerateStats();
-                AddCharacter(character);
-                RefreshOutput();
-            })
-
-            function RefreshOutput() {
-                var out = $('.characters');
-                var output = characters.reduce((tables, character, i) => {
-                    tables += `
+                function RefreshOutput() {
+                    var out = $(".characters");
+                    var output = characters.reduce((tables, character, i) => {
+                        tables += `
                         <div class="character card">
                         <div class="card-title">Character #${i + 1}</div>
                         <div class="">
@@ -125,232 +124,223 @@
                         </div>
                     `;
 
-                    return tables;
-                }, "");
-                out.html(output)
+                        return tables;
+                    }, "");
+                    out.html(output);
+                }
+
+                /// SELECT POPULATING ///
+                races.sort().forEach(race => {
+                    var option = $(`<option value="${race}">${race}</option>`);
+                    $("select#race-selection").append(option);
+                });
+
+                classes.sort().forEach(c => {
+                    var option = $(`<option value="${c}">${c}</option>`);
+                    $("select#class-selection").append(option);
+                });
+
+                backgrounds.sort().forEach(background => {
+                    var option = $(`<option value="${background}">${background}</option>`);
+                    $("select#background-selection").append(option);
+                });
+            });
+        </script>
+
+        <link rel="stylesheet" href="https://necolas.github.io/normalize.css/8.0.1/normalize.css" />
+        <style>
+            body {
+                background: #333333;
+                color: #dddddd;
+                font-family: "Consolas", "Courier New", Courier, monospace;
+                font-size: 16px;
+                user-select: none;
             }
 
+            header {
+                background-color: #00000080;
+                padding: 1rem 2rem;
+            }
 
+            header h1 {
+                margin: 0;
+                font-size: 1.3rem;
+            }
 
-            /// SELECT POPULATING ///
-            races.sort().forEach(race => {
-                var option = $(`<option value="${race}">${race}</option>`);
-                $('select#race-selection').append(option);
+            header h2 {
+                margin: 0;
+                font-style: italic;
+                font-size: 0.8rem;
+            }
 
-            });
+            main {
+                padding: 2rem 2rem;
+            }
 
-            classes.sort().forEach(c => {
-                var option = $(`<option value="${c}">${c}</option>`);
-                $('select#class-selection').append(option);
+            main label {
+                min-width: 6em;
+                display: inline-block;
+                text-align: right;
+            }
 
-            });
+            main input {
+                border: 0;
+                background: inherit;
+                color: #ddd;
+                margin: 0 0.5em 0 0;
+            }
 
-            backgrounds.sort().forEach(background => {
-                var option = $(`<option value="${background}">${background}</option>`);
-                $('select#background-selection').append(option);
+            .cards {
+                display: flex;
+                flex-flow: row wrap;
+            }
 
-            });
+            .card {
+                flex: 0 0 300px;
+                border: rgba(255, 255, 255, 0.5) 1px solid;
+                box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+                background-color: #555555;
+                margin: 0.5px 1em 0.5em 0;
+            }
 
-        })
-    </script>
+            .card-title {
+                padding: 0.7em;
+                font-size: 1.2em;
+            }
 
-    <link rel="stylesheet" href="https://necolas.github.io/normalize.css/8.0.1/normalize.css">
-    <style>
-        body {
-            background: #333333;
-            color: #dddddd;
-            font-family: 'Consolas', 'Courier New', Courier, monospace;
-            font-size: 16px;
-            user-select: none;
-        }
+            .card-body {
+                padding: 2em 0.7em;
+                color: rgba(255, 255, 255, 0.8);
+            }
 
-        header {
-            background-color: #00000080;
-            padding: 1rem 2rem;
-        }
+            .card-footer {
+                font-size: 0.75em;
+                font-style: italic;
+                font-weight: bold;
+                padding: 0.7em;
+                background: rgba(0, 0, 0, 0.25);
+            }
 
-        header h1 {
-            margin: 0;
-            font-size: 1.3rem;
-        }
+            .red {
+                background-color: crimson;
+                color: #f2d9de;
+            }
 
-        header h2 {
-            margin: 0;
-            font-style: italic;
-            font-size: 0.8rem;
-        }
+            .blue {
+                background-color: #254a8b;
+                color: #c7dbff;
+            }
 
-        main {
-            padding: 2rem 2rem;
+            .green {
+                background-color: #538853;
+                color: #e6efe6;
+            }
 
-        }
+            .input-footer {
+                margin: 1em 0;
+            }
 
-        main label {
-            min-width: 6em;
-            display: inline-block;
-            text-align: right;
-        }
+            .characters {
+                display: flex;
+            }
 
-        main input {
-            border: 0;
-            background: inherit;
-            color: #ddd;
-            margin: 0 .5em 0 0;
-        }
+            .characters th,
+            .characters td {
+                text-align: left;
+                padding: 0.5em;
+            }
 
-        .cards {
-            display: flex;
-            flex-flow: row wrap;
-        }
+            .characters table {
+                width: 100%;
+            }
 
-        .card {
-            flex: 0 0 300px;
-            border: rgba(255, 255, 255, 0.5) 1px solid;
-            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
-            background-color: #555555;
-            margin: 0.5px 1em 0.5em 0;
-        }
+            .character {
+                margin: 0 1em 0.5em 0;
+                box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+            }
 
-        .card-title {
-            padding: 0.7em;
-            font-size: 1.2em;
-        }
+            .character-stats th {
+                background-color: #00000080;
+                font-size: 1.2em;
+                font-family: verdana;
+            }
 
-        .card-body {
-            padding: 2em 0.7em;
-            color: rgba(255, 255, 255, 0.8);
-        }
+            input,
+            button,
+            select {
+                border-radius: 2px;
+                box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25);
+                border: 0;
+                padding: 0.45em;
+                cursor: pointer;
+            }
 
-        .card-footer {
-            font-size: 0.75em;
-            font-style: italic;
-            font-weight: bold;
-            padding: 0.7em;
-            background: rgba(0, 0, 0, 0.25);
-        }
+            #errors {
+                position: absolute;
+                top: 200px;
+                left: calc(50% - 250px);
+                width: 500px;
+                color: darkorange;
+            }
+        </style>
+    </head>
 
-        .red {
-            background-color: crimson;
-            color: #f2d9de;
-        }
-
-        .blue {
-            background-color: #254a8b;
-            color: #c7dbff;
-        }
-
-        .green {
-            background-color: #538853;
-            color: #e6efe6;
-        }
-
-        .input-footer {
-            margin: 1em 0;
-        }
-
-        .characters {
-            display: flex;
-        }
-
-        .characters th,
-        .characters td {
-            text-align: left;
-            padding: 0.5em;
-        }
-
-        .characters table {
-            width: 100%;
-        }
-
-        .character {
-            margin: 0 1em 0.5em 0;
-            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
-        }
-
-        .character-stats th {
-            background-color: #00000080;
-            font-size: 1.2em;
-            font-family: verdana;
-        }
-
-        input,
-        button,
-        select {
-            border-radius: 2px;
-            box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25);
-            border: 0;
-            padding: 0.45em;
-            cursor: pointer;
-        }
-
-        #errors {
-            position: absolute;
-            top: 200px;
-            left: calc(50% - 250px);
-            width: 500px;
-            color: darkorange;
-        }
-    </style>
-</head>
-
-<body>
-    <header>
-        <h1>D&D5e Character Creator</h1>
-    </header>
-    <main>
-        <div class="inputs cards">
-            <div class="card">
-                <div class="card-title red">
-                    Race Selection
+    <body>
+        <header>
+            <h1>D&D5e Character Creator</h1>
+        </header>
+        <main>
+            <div class="inputs cards">
+                <div class="card">
+                    <div class="card-title red">
+                        Race Selection
+                    </div>
+                    <div class="card-body">
+                        <label for="race-selection">Races: </label>
+                        <select name="race" id="race-selection">
+                            <option value="" disabled selected></option>
+                        </select>
+                    </div>
+                    <div class="card-footer">
+                        Choices are from SRD, PHB, and DMG.
+                    </div>
                 </div>
-                <div class="card-body">
-                    <label for="race-selection">Races: </label>
-                    <select name="race" id="race-selection">
-                        <option value="" disabled selected></option>
-                    </select>
+                <div class="card">
+                    <div class="card-title blue">
+                        Class Selection
+                    </div>
+                    <div class="card-body">
+                        <label for="class-selection">Classes: </label>
+                        <select name="class" id="class-selection">
+                            <option value="" disabled selected></option>
+                        </select>
+                    </div>
+                    <div class="card-footer">
+                        Choices are from SRD, PHB, and DMG.
+                    </div>
                 </div>
-                <div class="card-footer">
-                    Choices are from SRD, PHB, and DMG.
+                <div class="card">
+                    <div class="card-title green">
+                        Background Selection
+                    </div>
+                    <div class="card-body">
+                        <label for="background-selection">Backgrounds: </label>
+                        <select name="background" id="background-selection">
+                            <option value="" disabled selected></option>
+                        </select>
+                    </div>
+                    <div class="card-footer">
+                        Choices are from SRD, PHB, and DMG.
+                    </div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-title blue">
-                    Class Selection
-                </div>
-                <div class="card-body">
-                    <label for="class-selection">Classes: </label>
-                    <select name="class" id="class-selection">
-                        <option value="" disabled selected></option>
-                    </select>
-                </div>
-                <div class="card-footer">
-                    Choices are from SRD, PHB, and DMG.
-                </div>
+            <div class="input-footer">
+                <input type="checkbox" id="noOnesAllowed">Reroll all 1s</input><br>
+                <button class="add">Add Character</button>
+                <button class="random">Random Character</button>
             </div>
-            <div class="card">
-                <div class="card-title green">
-                    Background Selection
-                </div>
-                <div class="card-body">
-                    <label for="background-selection">Backgrounds: </label>
-                    <select name="background" id="background-selection">
-                        <option value="" disabled selected></option>
-                    </select>
-                </div>
-                <div class="card-footer">
-                    Choices are from SRD, PHB, and DMG.
-                </div>
-            </div>
-        </div>
-        <div class="input-footer">
-            <button class="add">Add Character</button>
-            <button class="random">Random Character</button>
-        </div>
-        <div class="characters cards">
-
-        </div>
-    </main>
-    <div id="errors"></div>
-</body>
-
+            <div class="characters cards"></div>
+        </main>
+        <div id="errors"></div>
+    </body>
 </html>
